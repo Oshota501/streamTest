@@ -14,11 +14,13 @@ class MixedSoundStreamServer(threading.Thread):
         # サーバーソケット生成
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
             server_sock.bind((self.SERVER_HOST, self.SERVER_PORT))
+            print("サーバー起動")
             server_sock.listen(1)
 
             # クライアントと接続
             client_sock, _ = server_sock.accept()
             with client_sock:
+                print("接続検知")
                 # クライアントからオーディオプロパティを受信
                 settings_list = client_sock.recv(256).decode('utf-8').split(",")
                 FORMAT = int(settings_list[0])

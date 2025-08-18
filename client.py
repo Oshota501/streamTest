@@ -5,20 +5,21 @@ import socket
 import threading
 
 class MixedSoundStreamClient(threading.Thread):
-    def __init__(self, server_host, server_port, wav_filename):
+    # wav_filenameは不要になったので、コンストラクタから削除
+    def __init__(self, server_host, server_port):
         threading.Thread.__init__(self)
         self.SERVER_HOST = server_host
         self.SERVER_PORT = int(server_port)
-        self.WAV_FILENAME = wav_filename
+        # self.WAV_FILENAME = wav_filename # 不要
 
     def run(self):
         audio = pyaudio.PyAudio()
-        wav_file = wave.open(self.WAV_FILENAME, 'rb')
+        # wav_file = wave.open(self.WAV_FILENAME, 'rb') # 不要
 
         FORMAT = pyaudio.paInt16
-        WAV_CHANNELS = wav_file.getnchannels()
-        RATE = wav_file.getframerate()
-        CHUNK = 1024
+        # WAV_CHANNELS = wav_file.getnchannels() # 不要
+        RATE = 44100  # 一般的なレートに固定 (WAVファイルに依存しないように)
+        CHUNK = 10000
         MIC_CHANNELS = 1
 
         mic_stream = audio.open(format=FORMAT,
@@ -41,20 +42,22 @@ class MixedSoundStreamClient(threading.Thread):
 
             # メインループ（送信）
             while True:
-                wav_data = wav_file.readframes(CHUNK)
+                # wav_data = wav_file.readframes(CHUNK) # 不要
                 mic_data = mic_stream.read(CHUNK)
-                if wav_data == b'':
-                    wav_file.rewind()
-                    wav_data = wav_file.readframes(CHUNK)
-                mixed = self.mix_sound(wav_data, mic_data, MIC_CHANNELS, CHUNK, 0.5, 0.5)
-                if mixed is not None:
-                    sock.sendall(mixed)
+                # if wav_data == b'': # 不要
+                #     wav_file.rewind() # 不要
+                #     wav_data = wav_file.readframes(CHUNK) # 不要
+                
+                # ミキシング処理をせず、マイクのデータを直接送信する
+                # mixed = self.mix_sound(wav_data, mic_data, MIC_CHANNELS, CHUNK, 0.5, 0.5) # 不要
+                if mic_data is not None:
+                    sock.sendall(mic_data) # mic_dataを直接送信
 
         mic_stream.stop_stream()
         mic_stream.close()
         audio.terminate()
 
-    # サーバから受信した音声を再生
+    # サーバから受信した音声を再生 (この関数は変更なし)
     def playback_stream(self, audio, sock, format, channels, rate, chunk):
         stream = audio.open(format=format,
                             channels=channels,
@@ -71,16 +74,12 @@ class MixedSoundStreamClient(threading.Thread):
             stream.stop_stream()
             stream.close()
 
-    def mix_sound(self, data1, data2, channels, frames_per_buffer, volume1, volume2):
-        if volume1 + volume2 > 1.0:
-            return None
-        decoded_data1 = np.frombuffer(data1, np.int16).copy()
-        decoded_data2 = np.frombuffer(data2, np.int16).copy()
-        decoded_data1.resize(channels * frames_per_buffer, refcheck=False)
-        decoded_data2.resize(channels * frames_per_buffer, refcheck=False)
-        return (decoded_data1 * volume1 + decoded_data2 * volume2).astype(np.int16).tobytes()
+    # mix_sound関数は使わなくなったので、削除してもOK
+    # def mix_sound(self, data1, data2, channels, frames_per_buffer, volume1, volume2):
+    #     ...
 
 if __name__ == '__main__':
-    mss_client = MixedSoundStreamClient("localhost", 12345, "wavs/collectathon.wav")
+    # "wavs/collectathon.wav"を渡す必要がなくなった
+    mss_client = MixedSoundStreamClient("localhost", 12345)
     mss_client.start()
     mss_client.join()
