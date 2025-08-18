@@ -4,10 +4,11 @@ git clone https://github.com/Oshota501/streamTest.git
 python3 -m venv [newenvname]
 source [newenvname]/bin/activate
 
-pip install numpy
+pip3 install numpy
 brew install portaudio
+pip3 install pip
 pip install pyaudio
-pip install websockets
+pip3 install websockets
 ```
 ---
 # streamについて
