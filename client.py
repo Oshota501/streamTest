@@ -5,11 +5,18 @@ import socket
 import threading
 
 class MixedSoundStreamClient(threading.Thread):
+    DEFAULT_HOST = "localhost"
+    DEFAULT_PORT = 12345
+    def a ():
+        __path__
     # wav_filenameは不要になったので、コンストラクタから削除
-    def __init__(self, server_host, server_port):
+    def __init__(self, server_host=None, server_port=None):
         threading.Thread.__init__(self)
-        self.SERVER_HOST = server_host
-        self.SERVER_PORT = int(server_port)
+
+        
+        # 引数が指定されていればその値を、なければクラス変数のデフォルト値を使用
+        self.SERVER_HOST = server_host if server_host is not None else self.DEFAULT_HOST
+        self.SERVER_PORT = int(server_port) if server_port is not None else self.DEFAULT_PORT
         # self.WAV_FILENAME = wav_filename # 不要
 
     def run(self):
@@ -19,7 +26,7 @@ class MixedSoundStreamClient(threading.Thread):
         FORMAT = pyaudio.paInt16
         # WAV_CHANNELS = wav_file.getnchannels() # 不要
         RATE = 44100  # 一般的なレートに固定 (WAVファイルに依存しないように)
-        CHUNK = 10000
+        CHUNK = 4096
         MIC_CHANNELS = 1
 
         mic_stream = audio.open(format=FORMAT,
@@ -80,6 +87,6 @@ class MixedSoundStreamClient(threading.Thread):
 
 if __name__ == '__main__':
     # "wavs/collectathon.wav"を渡す必要がなくなった
-    mss_client = MixedSoundStreamClient("localhost", 12345)
+    mss_client = MixedSoundStreamClient()
     mss_client.start()
     mss_client.join()

@@ -5,10 +5,18 @@ python3 -m venv [newenvname]
 source [newenvname]/bin/activate
 
 pip3 install numpy
+# homebrewはmacのみだったりするので気をつけてください。OSに合わせてください。
 brew install portaudio
 pip3 install pip
 pip install pyaudio
 pip3 install websockets
+
+#　ここからWhisperを実装。サーバーのみ実装でOK
+pip install git+https://github.com/openai/whisper.git
+brew install ffmpeg
+#　ここでffmpegの実装方法はOSによって異なります。以下を参照してください。
+# https://github.com/openai/whisper/blob/main/README.md
+# 多分真ん中くらいにinstallの一覧表みたいなんがあります。
 ```
 ---
 # streamについて
