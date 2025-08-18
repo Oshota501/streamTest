@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Client</title>
+    <style>
+        body { font-family: sans-serif; }
+        #chatbox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Real-time Chat</h1>
+    <div id="chatbox"></div>
+    <input type="text" id="messageInput" placeholder="Type a message and press Enter..." size="50">
+
+    <script>
+        const chatbox = document.getElementById('chatbox');
+        const messageInput = document.getElementById('messageInput');
+
+        // Create a new WebSocket connection to the server.
+        // Make sure the address 'ws://localhost:8080' matches your server.
+        const ws = new WebSocket('ws://localhost:8080');
+
+        // Event: When the connection is successfully opened
+        ws.onopen = () => {
+            console.log('Connected to the WebSocket server!');
+            addMessageToChatbox('System: Connected to server.');
+        };
+
+        // Event: When a message is received from the server
+        ws.onmessage = (event) => {
+            console.log(`Received message from server: ${event.data}`);
+            addMessageToChatbox(`Server: ${event.data}`);
+        };
+
+        // Event: When an error occurs
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            addMessageToChatbox('System: Connection error.');
+        };
+
+        // Event: When the connection is closed
+        ws.onclose = () => {
+            console.log('Disconnected from the WebSocket server.');
+            addMessageToChatbox('System: Disconnected.');
+        };
+
+        // Send a message when the user presses Enter in the input field
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = messageInput.value;
+                ws.send(message);
+                addMessageToChatbox(`You: ${message}`);
+                messageInput.value = ''; // Clear the input
+            }
+        });
+
+        function addMessageToChatbox(message) {
+            chatbox.innerHTML += `<div>${message}</div>`;
+            // Scroll to the bottom
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
