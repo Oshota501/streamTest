@@ -1,4 +1,7 @@
 # 今適当に書いたのでもしかしたら間違っているかも...
+- client.pyはパイソン単体で動きます。
+- server.pyは今からgoに書き換えます。ただしwhisperの処理はpythonの方が優秀なのでgRPCと言う技術を使います。
+
 ```zsh
 git clone https://github.com/Oshota501/streamTest.git
 # 仮想環境を作ります。使うライブラリは頑張って解読してください。
