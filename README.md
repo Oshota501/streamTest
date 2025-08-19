@@ -1,4 +1,7 @@
-# 今適当に書いたのでもしかしたら間違っているかも...
+# 導入
+- Geminiの生成してくれた構文をコピペしたら上手いこと言ったので紹介します。多少私が手作業で修正しています。
+- geminiのプロンプトは次を参照してください。[こちら](https://g.co/gemini/share/e605e7942d2a)
+
 ```zsh
 git clone https://github.com/Oshota501/streamTest.git
 # 仮想環境を作ります。使うライブラリは頑張って解読してください。
