@@ -1,0 +1,49 @@
+// 使用するProtocol Buffersのバージョンを指定
+syntax = "proto3";
+
+// 生成されるGoのコードがどのパッケージに属するかを指定
+option go_package = "grpc-go-python/proto";
+
+// "Greeter"という名前のサービス（機能の集まり）を定義
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);
+  rpc StreamAudio (stream AudioChunk) returns (AudioReply);
+}
+
+// "SayHello"が受け取るメッセージの形式を定義
+message HelloRequest {
+  string name = 1; // 1はフィールド番号
+}
+
+// "SayHello"が返すメッセージの形式を定義
+message HelloReply {
+  string message = 1;
+}
+// 音声データのかたまり（チャンク）を表すメッセージ
+message AudioChunk {
+  bytes data = 1; // 音声データそのものをbytes型で格納
+}
+
+// ストリーミング完了後にサーバーが返すメッセージ
+message AudioReply {
+  string status = 1;
+  int64 received_bytes = 2; // 受け取った合計バイト数
+}
+
+service Transcriber {
+  // "Transcribe"という名前のRPCを定義
+  // 6秒分の音声データ(AudioData)を一度に受け取り、文字起こし結果(TranscriptionReply)を返す
+  rpc Transcribe(AudioData) returns (TranscriptionReply);
+}
+message AudioData {
+  bytes data = 1;
+  // 音声のプロパティも一緒に送る
+  int32 format = 2;
+  int32 channels = 3;
+  int32 rate = 4;
+}
+
+// 文字起こし結果を格納するメッセージ
+message TranscriptionReply {
+  string text = 1;
+}

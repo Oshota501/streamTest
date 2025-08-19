@@ -1,92 +1,59 @@
-import numpy as np
-import wave
-import pyaudio
-import socket
-import threading
+import grpc
+import pyaudio # PyAudioをインポート
+from proto import greeter_pb2
+from proto import greeter_pb2_grpc
 
-class MixedSoundStreamClient(threading.Thread):
-    DEFAULT_HOST = "localhost"
-    DEFAULT_PORT = 12345
-    def a ():
-        __path__
-    # wav_filenameは不要になったので、コンストラクタから削除
-    def __init__(self, server_host=None, server_port=None):
-        threading.Thread.__init__(self)
+# ▼▼▼ マイクと音声データの設定 ▼▼▼
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 44100
+CHUNK_SIZE = 1024 # PyAudioで読み取るチャンクサイズ
+# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        
-        # 引数が指定されていればその値を、なければクラス変数のデフォルト値を使用
-        self.SERVER_HOST = server_host if server_host is not None else self.DEFAULT_HOST
-        self.SERVER_PORT = int(server_port) if server_port is not None else self.DEFAULT_PORT
-        # self.WAV_FILENAME = wav_filename # 不要
-
-    def run(self):
-        audio = pyaudio.PyAudio()
-        # wav_file = wave.open(self.WAV_FILENAME, 'rb') # 不要
-
-        FORMAT = pyaudio.paInt16
-        # WAV_CHANNELS = wav_file.getnchannels() # 不要
-        RATE = 44100  # 一般的なレートに固定 (WAVファイルに依存しないように)
-        CHUNK = 4096
-        MIC_CHANNELS = 1
-
-        mic_stream = audio.open(format=FORMAT,
-                            channels=MIC_CHANNELS,
-                            rate=RATE,
-                            input=True,
-                            frames_per_buffer=CHUNK)
-
-        # サーバに接続
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((self.SERVER_HOST, self.SERVER_PORT))
-
-            # サーバにオーディオプロパティを送信
-            sock.send("{},{},{},{}".format(FORMAT, MIC_CHANNELS, RATE, CHUNK).encode('utf-8'))
-
-            # 受信再生スレッドを起動
-            playback_thread = threading.Thread(target=self.playback_stream, args=(audio, sock, FORMAT, MIC_CHANNELS, RATE, CHUNK))
-            playback_thread.daemon = True
-            playback_thread.start()
-
-            # メインループ（送信）
-            while True:
-                # wav_data = wav_file.readframes(CHUNK) # 不要
-                mic_data = mic_stream.read(CHUNK)
-                # if wav_data == b'': # 不要
-                #     wav_file.rewind() # 不要
-                #     wav_data = wav_file.readframes(CHUNK) # 不要
-                
-                # ミキシング処理をせず、マイクのデータを直接送信する
-                # mixed = self.mix_sound(wav_data, mic_data, MIC_CHANNELS, CHUNK, 0.5, 0.5) # 不要
-                if mic_data is not None:
-                    sock.sendall(mic_data) # mic_dataを直接送信
-
-        mic_stream.stop_stream()
-        mic_stream.close()
+def generate_audio_chunks():
+    """マイクから音声を読み込み、チャンクごとにyieldするジェネレータ関数"""
+    audio = pyaudio.PyAudio()
+    
+    # マイク入力用のストリームを開く
+    stream = audio.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK_SIZE)
+    
+    print("マイク入力のストリーミングを開始しました... (Ctrl+Cで終了)")
+    
+    try:
+        while True:
+            # マイクから音声データを読み取る
+            data = stream.read(CHUNK_SIZE)
+            # 読み取ったデータをAudioChunkメッセージとしてyieldする
+            yield greeter_pb2.AudioChunk(data=data)
+            
+    except KeyboardInterrupt:
+        # Ctrl+Cが押されたらループを抜ける
+        print("ストリーミングを停止します。")
+    finally:
+        # ストリームとPyAudioをクリーンアップ
+        stream.stop_stream()
+        stream.close()
         audio.terminate()
+        print("リソースを解放しました。")
 
-    # サーバから受信した音声を再生 (この関数は変更なし)
-    def playback_stream(self, audio, sock, format, channels, rate, chunk):
-        stream = audio.open(format=format,
-                            channels=channels,
-                            rate=rate,
-                            output=True,
-                            frames_per_buffer=chunk)
-        try:
-            while True:
-                data = sock.recv(chunk * 2)  # 16bit=2byte
-                if not data:
-                    break
-                stream.write(data)
-        finally:
-            stream.stop_stream()
-            stream.close()
 
-    # mix_sound関数は使わなくなったので、削除してもOK
-    # def mix_sound(self, data1, data2, channels, frames_per_buffer, volume1, volume2):
-    #     ...
+def run():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = greeter_pb2_grpc.GreeterStub(channel)
+        
+        print("音声ストリーミングを開始します...")
+        
+        # マイク入力用のジェネレータを渡してStreamAudioメソッドを呼び出す
+        audio_generator = generate_audio_chunks()
+        response = stub.StreamAudio(audio_generator)
+        
+        print("\nサーバーからの応答:")
+        print(f"  - ステータス: {response.status}")
+        print(f"  - 受信合計バイト数: {response.received_bytes}")
 
 if __name__ == '__main__':
-    # "wavs/collectathon.wav"を渡す必要がなくなった
-    mss_client = MixedSoundStreamClient()
-    mss_client.start()
-    mss_client.join()
+    run()
