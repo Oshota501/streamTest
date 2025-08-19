@@ -9,13 +9,11 @@ from proto import greeter_pb2_grpc
 
 class TranscriberService(greeter_pb2_grpc.TranscriberServicer):
     def __init__(self):
-        print("Whisperモデルをロード中です... (base)")
         self.model = whisper.load_model("base")
         self.p_audio = pyaudio.PyAudio() # PyAudioを初期化
-        print("モデルのロードが完了しました。")
+        print("文字起こし。")
 
     def Transcribe(self, request, context):
-        print("Goサーバーから音声データを受信しました。文字起こしを実行します...")
         
         # 受信した音声データをWAVファイルとして保存
         wav_file_path = "temp_audio_for_whisper.wav"
@@ -30,9 +28,7 @@ class TranscriberService(greeter_pb2_grpc.TranscriberServicer):
         result = self.model.transcribe(wav_file_path, fp16=False, language="ja")
         transcribed_text = result["text"]
         
-        print("-----------------------------------------")
-        print(f"文字起こし結果: {transcribed_text}")
-        print("-----------------------------------------")
+        print(f" {transcribed_text}")
         
         # 結果をGoサーバーに返す
         return greeter_pb2.TranscriptionReply(text=transcribed_text)
