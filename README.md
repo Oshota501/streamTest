@@ -65,6 +65,7 @@ protoc --go_out=. --go_opt=paths=source_relative \
 - [x] whisperの文字起こし機能
 - [x] goでの書き換えの実現
 - [ ] サーバー構築（ビルド）
+- [ ] GeminiAPI
 - [ ] raspberryPI
 # 起動について
 お使いの端末で使用するにはターミナルを3つ同時に起動する必要があります。
@@ -83,6 +84,6 @@ python3 whisper_server.py
 ```
 ターミナルその②
 ```zsh
-cd /server
-go main.go
+cd server/
+go run main.go
 ```

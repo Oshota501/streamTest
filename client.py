@@ -21,7 +21,7 @@ def generate_audio_chunks():
                         input=True,
                         frames_per_buffer=CHUNK_SIZE)
     
-    print("文字起こしスタート\n")
+    print("マイク入力のストリーミングを開始しました... (Ctrl+Cで終了)")
     
     try:
         while True:
